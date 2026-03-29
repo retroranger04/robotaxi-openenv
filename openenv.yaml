@@ -1,0 +1,47 @@
+name: robotaxi-openenv
+version: "1.0.0"
+description: >
+  Open evaluation environment for robotaxi fleet dispatch.
+  Three tasks of increasing difficulty test a controller's ability to
+  assign rides, manage battery, and sustain throughput under demand pressure.
+
+environment:
+  num_taxis: 10
+  num_zones: 6
+  max_steps: 40
+  initial_battery: 100
+  charging_time: 3
+  charge_amount: 50
+  charging_capacity: 2
+
+tasks:
+  - name: basic_dispatch
+    module: tasks.task_easy
+    description: Baseline dispatch with light demand and full battery headroom.
+    weights:
+      service_rate: 0.5
+      wait_score: 0.3
+      efficiency: 0.2
+
+  - name: energy_constrained_dispatch
+    module: tasks.task_medium
+    description: Medium demand with low initial battery on several vehicles.
+    weights:
+      service_rate: 0.4
+      wait_score: 0.2
+      battery_score: 0.2
+      efficiency: 0.2
+
+  - name: urban_stress_test
+    module: tasks.task_hard
+    description: High demand burst with tight wait windows and depleted batteries.
+    weights:
+      service_rate: 0.4
+      wait_score: 0.2
+      battery_score: 0.2
+      efficiency: 0.2
+
+api:
+  host: "0.0.0.0"
+  port: 7860
+  entrypoint: "env.api:app"
