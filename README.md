@@ -1,3 +1,13 @@
+---
+title: Robotaxi OpenEnv
+emoji: 🚕
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Robotaxi OpenEnv
 
 A lightweight, deterministic evaluation environment for robotaxi fleet dispatch controllers.
