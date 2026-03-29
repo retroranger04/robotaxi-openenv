@@ -15,6 +15,14 @@ def create_fastapi_app(env: RobotaxiEnv):
 
     app = FastAPI(title="Robotaxi OpenEnv")
 
+    @app.get("/")
+    def root():
+        return {"status": "Robotaxi OpenEnv running"}
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
     @app.post("/reset", response_model=RobotaxiObservation)
     def reset():
         return env.reset()

@@ -120,6 +120,26 @@ To skip the LLM summary, remove or leave `OPENAI_API_KEY` unset — it degrades 
 
 See `openenv.yaml` for full environment and task configuration.
 
+## Quick API Test
+
+You can test the deployed environment using:
+
+```
+POST /reset
+POST /step
+```
+
+Example using curl:
+
+```bash
+curl -X POST https://<your-space>.hf.space/reset
+```
+
+Expected:
+
+- Returns initial environment state
+- JSON response
+
 ## License
 
 MIT
