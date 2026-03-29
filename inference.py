@@ -39,10 +39,15 @@ load_dotenv(dotenv_path=_env_path)
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 print("API KEY LOADED:", OPENAI_API_KEY is not None)
 
-llm_client = OpenAI(api_key=OPENAI_API_KEY or "sk-placeholder", base_url=API_BASE_URL)
+try:
+    llm_client = OpenAI(api_key=OPENAI_API_KEY or "sk-placeholder", base_url=API_BASE_URL)
+except Exception as e:
+    print(f"  [LLM init error] {type(e).__name__}: {e}")
+    llm_client = None
 
 
 def llm_summarize(task_name: str, metrics: dict, score: float) -> str:
@@ -54,6 +59,8 @@ def llm_summarize(task_name: str, metrics: dict, score: float) -> str:
         f"Score: {score:.4f}\n"
         "In one sentence, summarize the fleet's performance."
     )
+    if llm_client is None:
+        return "LLM unavailable"
     try:
         response = llm_client.chat.completions.create(
             model=MODEL_NAME,
@@ -171,14 +178,17 @@ def main():
     print("=" * 50)
 
     for task_name, config in tasks:
-        env = RobotaxiEnv(seed=config["seed"])
-        score, metrics = run_episode(env, config, strategy)
-        summary = llm_summarize(task_name, metrics, score)
+        try:
+            env = RobotaxiEnv(seed=config["seed"])
+            score, metrics = run_episode(env, config, strategy)
+            summary = llm_summarize(task_name, metrics, score)
 
-        print(f"\n{task_name}: {score:.2f}")
-        print(f"  completed={metrics['completed']}  missed={metrics['missed']}"
-              f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}")
-        print(f"  summary: {summary}")
+            print(f"\n{task_name}: {score:.2f}")
+            print(f"  completed={metrics['completed']}  missed={metrics['missed']}"
+                  f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}")
+            print(f"  summary: {summary}")
+        except Exception as e:
+            print(f"\n{task_name}: ERROR — {type(e).__name__}: {e}")
 
     print("\n" + "=" * 50)
 
