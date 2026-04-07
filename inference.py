@@ -136,7 +136,7 @@ def select_action(observation, strategy: dict) -> RobotaxiAction:
 def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = False) -> tuple:
     """
     Run one full episode.
-    Returns (score, final_metrics).
+    Returns (score, final_metrics, steps_completed).
     """
     obs = env.reset()
     info = {}
@@ -147,6 +147,8 @@ def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = 
         action = select_action(obs, strategy)
         obs, reward, done, info = env.step(action)
         step += 1
+
+        print(f"[STEP] step={step} reward={reward}", flush=True)
 
         if verbose:
             print(
@@ -160,7 +162,7 @@ def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = 
             break
 
     score = grade(info, config)
-    return score, info
+    return score, info, step
 
 
 # ---------------------------------------------------------------------------
@@ -178,16 +180,20 @@ def main():
     print("=" * 50)
 
     for task_name, config in tasks:
+        steps_completed = 0
+        print(f"[START] task={task_name}", flush=True)
         try:
             env = RobotaxiEnv(seed=config["seed"])
-            score, metrics = run_episode(env, config, strategy)
+            score, metrics, steps_completed = run_episode(env, config, strategy)
             summary = llm_summarize(task_name, metrics, score)
 
+            print(f"[END] task={task_name} score={score:.4f} steps={steps_completed}", flush=True)
             print(f"\n{task_name}: {score:.2f}")
             print(f"  completed={metrics['completed']}  missed={metrics['missed']}"
                   f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}")
             print(f"  summary: {summary}")
         except Exception as e:
+            print(f"[END] task={task_name} score=0.0 steps={steps_completed}", flush=True)
             print(f"\n{task_name}: ERROR — {type(e).__name__}: {e}")
 
     print("\n" + "=" * 50)
