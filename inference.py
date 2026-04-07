@@ -41,12 +41,9 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 
-print(f"API KEY LOADED: {OPENAI_API_KEY is not None}", file=sys.stderr, flush=True)
-
 try:
     llm_client = OpenAI(api_key=OPENAI_API_KEY or "sk-placeholder", base_url=API_BASE_URL)
-except Exception as e:
-    print(f"  [LLM init error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+except Exception:
     llm_client = None
 
 
@@ -68,11 +65,7 @@ def llm_summarize(task_name: str, metrics: dict, score: float) -> str:
             max_tokens=60,
         )
         return response.choices[0].message.content.strip()
-    except (openai.AuthenticationError, openai.RateLimitError, openai.APIConnectionError) as e:
-        print(f"  [LLM error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
-        return "LLM unavailable"
-    except Exception as e:
-        print(f"  [LLM error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+    except Exception:
         return "LLM unavailable"
 
 
@@ -133,7 +126,7 @@ def select_action(observation, strategy: dict) -> RobotaxiAction:
 # ---------------------------------------------------------------------------
 # Episode runner
 # ---------------------------------------------------------------------------
-def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = False) -> tuple:
+def run_episode(env: RobotaxiEnv, config: dict, strategy: dict) -> tuple:
     """
     Run one full episode.
     Returns (score, final_metrics, steps_completed).
@@ -149,15 +142,6 @@ def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = 
         step += 1
 
         print(f"[STEP] step={step} reward={reward}", flush=True)
-
-        if verbose:
-            print(
-                f"  step {step:02d} | action={action.action_type}"
-                + (f" taxi={action.taxi_id}" if action.taxi_id is not None else "")
-                + (f" req={action.request_id}" if action.request_id is not None else "")
-                + f" | completed={info['completed']} missed={info['missed']}",
-                file=sys.stderr,
-            )
 
         if done or step >= max_steps:
             break
@@ -176,29 +160,16 @@ def main():
         ("urban_stress_test", hard_config()),
     ]
 
-    print("=" * 50, file=sys.stderr)
-    print("Robotaxi OpenEnv — Inference Run", file=sys.stderr)
-    print("=" * 50, file=sys.stderr)
-
     for task_name, config in tasks:
         steps_completed = 0
         print(f"[START] task={task_name}", flush=True)
         try:
             env = RobotaxiEnv(seed=config["seed"])
             score, metrics, steps_completed = run_episode(env, config, strategy)
-            summary = llm_summarize(task_name, metrics, score)
-
+            llm_summarize(task_name, metrics, score)
             print(f"[END] task={task_name} score={score:.4f} steps={steps_completed}", flush=True)
-            print(f"{task_name}: {score:.2f}", file=sys.stderr)
-            print(f"  completed={metrics['completed']}  missed={metrics['missed']}"
-                  f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}",
-                  file=sys.stderr)
-            print(f"  summary: {summary}", file=sys.stderr)
-        except Exception as e:
+        except Exception:
             print(f"[END] task={task_name} score=0.0 steps={steps_completed}", flush=True)
-            print(f"{task_name}: ERROR — {type(e).__name__}: {e}", file=sys.stderr)
-
-    print("=" * 50, file=sys.stderr)
 
 
 if __name__ == "__main__":
