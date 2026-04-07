@@ -41,12 +41,12 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 
-print("API KEY LOADED:", OPENAI_API_KEY is not None)
+print(f"API KEY LOADED: {OPENAI_API_KEY is not None}", file=sys.stderr, flush=True)
 
 try:
     llm_client = OpenAI(api_key=OPENAI_API_KEY or "sk-placeholder", base_url=API_BASE_URL)
 except Exception as e:
-    print(f"  [LLM init error] {type(e).__name__}: {e}")
+    print(f"  [LLM init error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
     llm_client = None
 
 
@@ -69,10 +69,10 @@ def llm_summarize(task_name: str, metrics: dict, score: float) -> str:
         )
         return response.choices[0].message.content.strip()
     except (openai.AuthenticationError, openai.RateLimitError, openai.APIConnectionError) as e:
-        print(f"  [LLM error] {type(e).__name__}: {e}")
+        print(f"  [LLM error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
         return "LLM unavailable"
     except Exception as e:
-        print(f"  [LLM error] {type(e).__name__}: {e}")
+        print(f"  [LLM error] {type(e).__name__}: {e}", file=sys.stderr, flush=True)
         return "LLM unavailable"
 
 
@@ -155,7 +155,8 @@ def run_episode(env: RobotaxiEnv, config: dict, strategy: dict, verbose: bool = 
                 f"  step {step:02d} | action={action.action_type}"
                 + (f" taxi={action.taxi_id}" if action.taxi_id is not None else "")
                 + (f" req={action.request_id}" if action.request_id is not None else "")
-                + f" | completed={info['completed']} missed={info['missed']}"
+                + f" | completed={info['completed']} missed={info['missed']}",
+                file=sys.stderr,
             )
 
         if done or step >= max_steps:
@@ -175,9 +176,9 @@ def main():
         ("urban_stress_test", hard_config()),
     ]
 
-    print("=" * 50)
-    print("Robotaxi OpenEnv — Inference Run")
-    print("=" * 50)
+    print("=" * 50, file=sys.stderr)
+    print("Robotaxi OpenEnv — Inference Run", file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
 
     for task_name, config in tasks:
         steps_completed = 0
@@ -188,15 +189,16 @@ def main():
             summary = llm_summarize(task_name, metrics, score)
 
             print(f"[END] task={task_name} score={score:.4f} steps={steps_completed}", flush=True)
-            print(f"\n{task_name}: {score:.2f}")
+            print(f"{task_name}: {score:.2f}", file=sys.stderr)
             print(f"  completed={metrics['completed']}  missed={metrics['missed']}"
-                  f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}")
-            print(f"  summary: {summary}")
+                  f"  idle={metrics['idle_time']}  battery_failures={metrics['battery_failures']}",
+                  file=sys.stderr)
+            print(f"  summary: {summary}", file=sys.stderr)
         except Exception as e:
             print(f"[END] task={task_name} score=0.0 steps={steps_completed}", flush=True)
-            print(f"\n{task_name}: ERROR — {type(e).__name__}: {e}")
+            print(f"{task_name}: ERROR — {type(e).__name__}: {e}", file=sys.stderr)
 
-    print("\n" + "=" * 50)
+    print("=" * 50, file=sys.stderr)
 
 
 if __name__ == "__main__":
