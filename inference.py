@@ -36,13 +36,15 @@ load_dotenv(dotenv_path=_env_path)
 # ---------------------------------------------------------------------------
 # LLM client (used once per episode for a performance summary, not for policy)
 # ---------------------------------------------------------------------------
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
+
+print("Using API_BASE_URL:", os.environ.get("API_BASE_URL"), file=sys.stderr)
 
 try:
-    llm_client = OpenAI(api_key=OPENAI_API_KEY or "sk-placeholder", base_url=API_BASE_URL)
+    llm_client = OpenAI(
+        base_url=os.environ["API_BASE_URL"],
+        api_key=os.environ["API_KEY"],
+    )
 except Exception:
     llm_client = None
 
