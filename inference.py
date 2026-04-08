@@ -15,7 +15,6 @@ import sys
 
 from dotenv import load_dotenv
 from openai import OpenAI
-import openai
 
 load_dotenv()
 
@@ -37,8 +36,6 @@ load_dotenv(dotenv_path=_env_path)
 # LLM client (used once per episode for a performance summary, not for policy)
 # ---------------------------------------------------------------------------
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-
-print("Using API_BASE_URL:", os.environ.get("API_BASE_URL"), file=sys.stderr)
 
 try:
     llm_client = OpenAI(
